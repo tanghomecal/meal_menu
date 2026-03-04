@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Family Menu</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream:#FDF8F2; --parchment:#F5EFE6; --parchment-mid:#EAE0D0; --parchment-dark:#D8CABB;
+    --sage:#7A9E8E; --sage-light:#EAF2EE; --sage-mid:#C4DDD5; --sage-dark:#5A7A6C;
+    --terra:#C4614A; --terra-light:#FAEAE7; --terra-mid:#EDBAAF;
+    --charcoal:#2D2D2D; --charcoal-mid:#5A5A5A; --mid:#9A9A9A;
+    --amber:#C47A2A; --amber-light:#FEF5E7; --amber-mid:#F5D99A;
+    --blue:#2A6AC4; --blue-light:#EBF2FE; --blue-mid:#AACAF5;
+    --morning:#3B82C4; --morning-bg:#EBF4FC; --morning-mid:#AACAF5;
+    --lunch:#2D8A5A; --lunch-bg:#EAF7F0; --lunch-mid:#A0D9BE;
+    --dinner:#C4622D; --dinner-bg:#FCF0EA; --dinner-mid:#EDBAAF;
+    --white:#FFFFFF;
+    --shadow-sm:0 1px 6px rgba(196,97,74,0.08);
+    --radius:18px; --radius-sm:12px;
+    --font:'Nunito',sans-serif; --mono:'DM Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{font-family:var(--font);background:var(--cream);color:var(--charcoal);min-height:100vh;overscroll-behavior:none;}
+  .view{display:none;}
+  .view.active{display:flex;flex-direction:column;min-height:100vh;}
+
+  /* ── SHARED HEADER ── */
+  .app-header{background:linear-gradient(145deg,#E8D5C8 0%,#DCCBBF 100%);padding:44px 16px 16px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(196,97,74,0.12);}
+  .header-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+  .back-btn{background:rgba(255,255,255,0.5);border:none;color:var(--charcoal);width:40px;height:40px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .back-btn:active{background:rgba(255,255,255,0.8);}
+  .header-title{flex:1;}
+  .header-eyebrow{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--terra);font-weight:700;}
+  .header-h2{font-size:26px;font-weight:800;letter-spacing:-0.4px;color:var(--charcoal);}
+  .header-sub{font-size:13px;color:var(--charcoal-mid);font-weight:500;margin-top:2px;}
+
+  /* ── SYNC BADGE ── */
+  .sync-badge{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;}
+  .sync-badge.synced{background:var(--sage-light);color:var(--sage-dark);}
+  .sync-badge.pending{background:var(--amber-light);color:var(--amber);animation:badge-pulse 2s ease-in-out infinite;}
+  .sync-badge.syncing{background:#EEF;color:#558;}
+  .sync-badge.error{background:var(--terra-light);color:var(--terra);}
+  @keyframes badge-pulse{0%,100%{opacity:1;}50%{opacity:0.6;}}
+
+  /* ── HOME ── */
+  #view-home{background:var(--cream);}
+  .home-hero{background:linear-gradient(145deg,#E8D5C8 0%,#D4BFB5 100%);padding:52px 24px 24px;position:relative;overflow:hidden;}
+  .home-hero::before{content:'';position:absolute;top:-40px;right:-40px;width:180px;height:180px;background:rgba(255,255,255,0.15);border-radius:50%;}
+  .home-hero .eyebrow{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--terra);font-weight:700;margin-bottom:8px;}
+  .home-hero h1{font-size:34px;font-weight:800;letter-spacing:-0.5px;color:var(--charcoal);line-height:1.1;margin-bottom:6px;}
+  .home-hero .subtitle{font-size:15px;color:var(--charcoal-mid);}
+  .home-hero-actions{display:flex;align-items:center;justify-content:space-between;margin-top:14px;}
+  .settings-btn{background:rgba(255,255,255,0.5);border:none;padding:8px 14px;border-radius:20px;font-family:var(--font);font-size:13px;font-weight:700;color:var(--charcoal-mid);cursor:pointer;display:flex;align-items:center;gap:6px;}
+  .settings-btn:active{background:rgba(255,255,255,0.8);}
+
+  /* ── WEEK NAV BAR ── */
+  .week-nav-bar{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 0;}
+  .week-nav-side{display:flex;gap:8px;}
+  .wnav-btn{background:var(--white);border:2px solid var(--parchment-mid);border-radius:var(--radius-sm);width:44px;height:44px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--charcoal);transition:all 0.15s;flex-shrink:0;}
+  .wnav-btn:active{background:var(--parchment);transform:scale(0.95);}
+  .wnav-btn:disabled{opacity:0.3;cursor:not-allowed;}
+  .week-title-wrap{text-align:center;flex:1;}
+  .week-num{font-size:22px;font-weight:800;color:var(--charcoal);letter-spacing:-0.3px;}
+  .week-dots{display:flex;gap:5px;justify-content:center;margin-top:4px;}
+  .wdot{width:7px;height:7px;border-radius:50%;background:var(--parchment-mid);cursor:pointer;transition:all 0.2s;}
+  .wdot.active{background:var(--terra);transform:scale(1.3);}
+
+  /* ── WEEK GRID (landscape 7-col) ── */
+  .week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;padding:10px 10px 100px;overflow-x:auto;}
+  .day-col{display:flex;flex-direction:column;gap:5px;min-width:0;}
+  .day-header{background:var(--charcoal);color:var(--white);border-radius:var(--radius-sm) var(--radius-sm) 0 0;padding:8px 6px 6px;text-align:center;flex-shrink:0;}
+  .day-col.today .day-header{background:var(--terra);}
+  .day-name{font-family:var(--font);font-size:13px;font-weight:800;letter-spacing:0.02em;}
+  .meal-card{border-radius:var(--radius-sm);padding:8px 8px 6px;border:1.5px solid var(--parchment-mid);box-shadow:var(--shadow-sm);display:flex;flex-direction:column;gap:3px;min-height:80px;}
+  .meal-card.morning{background:var(--morning-bg);border-left:3px solid var(--morning);}
+  .meal-card.lunch{background:var(--lunch-bg);border-left:3px solid var(--lunch);}
+  .meal-card.dinner{background:var(--dinner-bg);border-left:3px solid var(--dinner);}
+  .meal-label{font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;}
+  .meal-card.morning .meal-label{color:var(--morning);}
+  .meal-card.lunch   .meal-label{color:var(--lunch);}
+  .meal-card.dinner  .meal-label{color:var(--dinner);}
+  .meal-dishes{font-size:10.5px;line-height:1.4;color:var(--charcoal);font-weight:500;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;}
+  .meal-dishes.empty{color:var(--mid);font-style:italic;font-size:10px;}
+  .dish-sep{border:none;border-top:1px solid var(--parchment-mid);margin:3px 0;flex-shrink:0;}
+
+  /* ── LOADING BANNER ── */
+  .loading-banner{background:var(--parchment);border:1px solid var(--parchment-mid);border-radius:var(--radius-sm);padding:14px 18px;margin:14px 16px 0;font-size:14px;color:var(--charcoal-mid);font-weight:600;display:none;align-items:center;gap:10px;}
+  .loading-banner.visible{display:flex;}
+  .spinner{width:18px;height:18px;border:2px solid var(--parchment-mid);border-top-color:var(--terra);border-radius:50%;animation:spin 0.8s linear infinite;flex-shrink:0;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* ── SETTINGS ── */
+  #view-settings{background:var(--cream);}
+  .settings-scroll{flex:1;overflow-y:auto;padding:20px 16px 60px;}
+  .settings-card{background:var(--white);border:1.5px solid var(--parchment-mid);border-radius:var(--radius);padding:20px;margin-bottom:16px;box-shadow:var(--shadow-sm);}
+  .settings-card h3{font-size:17px;font-weight:800;color:var(--charcoal);margin-bottom:6px;}
+  .settings-card p{font-size:14px;color:var(--charcoal-mid);line-height:1.6;margin-bottom:14px;font-weight:500;}
+  .settings-label{font-size:13px;font-weight:700;color:var(--charcoal-mid);margin-bottom:6px;display:block;text-transform:uppercase;letter-spacing:1px;}
+  .settings-input{width:100%;border:2px solid var(--parchment-mid);border-radius:var(--radius-sm);padding:14px;font-family:var(--font);font-size:15px;color:var(--charcoal);background:var(--cream);outline:none;transition:border-color 0.2s;font-weight:500;}
+  .settings-input:focus{border-color:var(--sage);}
+  .connect-btn{width:100%;margin-top:12px;background:linear-gradient(135deg,var(--sage),var(--sage-dark));color:white;border:none;border-radius:var(--radius-sm);padding:16px;font-family:var(--font);font-size:16px;font-weight:800;cursor:pointer;box-shadow:0 4px 14px rgba(90,122,108,0.3);}
+  .connect-btn:active{transform:scale(0.98);}
+  .connect-btn.loading{opacity:0.7;pointer-events:none;}
+  .conn-status{margin-top:12px;padding:12px 16px;border-radius:var(--radius-sm);font-size:14px;font-weight:600;display:none;}
+  .conn-status.ok{background:var(--sage-light);color:var(--sage-dark);display:block;}
+  .conn-status.err{background:var(--terra-light);color:var(--terra);display:block;}
+  .setup-steps{list-style:none;counter-reset:steps;}
+  .setup-steps li{counter-increment:steps;display:flex;gap:12px;margin-bottom:14px;font-size:14px;color:var(--charcoal-mid);font-weight:500;line-height:1.5;}
+  .setup-steps li::before{content:counter(steps);background:var(--terra);color:white;font-weight:800;font-size:13px;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+
+  /* ── TOAST ── */
+  .toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:var(--charcoal);color:white;padding:12px 22px;border-radius:24px;font-size:14px;font-weight:700;z-index:9999;opacity:0;transition:opacity 0.25s;white-space:nowrap;pointer-events:none;}
+  .toast.show{opacity:1;}
+
+  /* ── LEGEND ── */
+  .legend-bar{display:flex;gap:14px;padding:10px 16px 0;align-items:center;flex-wrap:wrap;}
+  .legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--charcoal-mid);font-weight:600;letter-spacing:0.04em;text-transform:uppercase;}
+  .legend-dot{width:9px;height:9px;border-radius:50%;}
+
+  /* ── SETUP PROMPT ── */
+  .setup-prompt{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center;}
+  .setup-prompt .icon{font-size:52px;margin-bottom:16px;}
+  .setup-prompt h2{font-size:22px;font-weight:800;color:var(--charcoal);margin-bottom:8px;}
+  .setup-prompt p{font-size:14px;color:var(--mid);line-height:1.6;margin-bottom:20px;font-weight:500;}
+  .setup-prompt button{background:var(--sage);color:white;border:none;padding:14px 28px;border-radius:var(--radius-sm);font-family:var(--font);font-size:15px;font-weight:800;cursor:pointer;}
+</style>
+</head>
+<body>
+
+<!-- eruda debugger — same as inventory checker -->
+<script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+<script>eruda.init();</script>
+
+<!-- ══════════ HOME ══════════ -->
+<div id="view-home" class="view active">
+  <div class="home-hero">
+    <div class="eyebrow">Family Menu</div>
+    <h1>Weekly Meals</h1>
+    <div class="subtitle" id="hero-subtitle">Connect to begin</div>
+    <div class="home-hero-actions">
+      <div id="sync-badge" class="sync-badge synced" onclick="manualSync()">✓ Synced</div>
+      <button class="settings-btn" onclick="showView('settings')">⚙️ Settings</button>
+    </div>
+  </div>
+
+  <div id="loading-banner" class="loading-banner">
+    <div class="spinner"></div>
+    <span id="loading-text">Loading menu from Google Sheets…</span>
+  </div>
+
+  <div class="week-nav-bar">
+    <div class="week-nav-side">
+      <button class="wnav-btn" id="prev-btn" onclick="changeWeek(-1)">‹</button>
+    </div>
+    <div class="week-title-wrap">
+      <div class="week-num" id="week-num-label">Week 1</div>
+      <div class="week-dots" id="week-dots"></div>
+    </div>
+    <div class="week-nav-side">
+      <button class="wnav-btn" id="next-btn" onclick="changeWeek(1)">›</button>
+    </div>
+  </div>
+
+  <div class="legend-bar">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--morning)"></div>Morning</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--lunch)"></div>Lunch</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--dinner)"></div>Dinner</div>
+  </div>
+
+  <div id="week-grid-wrap"></div>
+</div>
+
+<!-- ══════════ SETTINGS ══════════ -->
+<div id="view-settings" class="view">
+  <div class="app-header">
+    <div class="header-row">
+      <button class="back-btn" onclick="showView('home')">←</button>
+      <div class="header-title">
+        <div class="header-eyebrow">Configuration</div>
+        <div class="header-h2">Settings</div>
+      </div>
+    </div>
+  </div>
+  <div class="settings-scroll">
+
+    <div class="settings-card">
+      <h3>🔗 Google Sheets Connection</h3>
+      <p>Paste your Cloudflare Worker URL (or Apps Script URL) below. This connects the app to your family menu Google Sheet.</p>
+      <label class="settings-label">Web App URL</label>
+      <input class="settings-input" type="url" id="webAppUrl" placeholder="https://your-worker.workers.dev  or  https://script.google.com/…/exec">
+      <button class="connect-btn" id="connect-btn" onclick="connectToSheet()">Connect &amp; Load Menu</button>
+      <div class="conn-status" id="conn-status"></div>
+    </div>
+
+    <div class="settings-card">
+      <h3>📋 Setup Instructions</h3>
+      <ol class="setup-steps">
+        <li>Upload <strong>FamilyMenu_GoogleSheet.xlsx</strong> to Google Drive. Right-click → Open with → Google Sheets.</li>
+        <li>In Google Sheets, click <strong>Extensions → Apps Script</strong>. Delete existing code, paste in <strong>FamilyMenu_AppsScript.gs</strong>, set your Spreadsheet ID, and click Save.</li>
+        <li>Click <strong>Deploy → New deployment</strong>. Type: Web app · Execute as: Me · Who has access: Anyone. Click Deploy and authorise.</li>
+        <li>(Optional but recommended) Set up a <strong>Cloudflare Worker</strong> as a CORS proxy pointing to your Apps Script URL. Paste the Worker URL here instead.</li>
+        <li>Paste the URL above and tap Connect.</li>
+      </ol>
+    </div>
+
+    <div class="settings-card">
+      <h3>⚠️ Clear Cached Data</h3>
+      <p>Removes the locally cached schedule. Does not affect the Google Sheet.</p>
+      <button style="width:100%;background:var(--terra-light);color:var(--terra);border:1.5px solid var(--terra-mid);border-radius:var(--radius-sm);padding:14px;font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;" onclick="confirmClear()">Clear Cached Menu Data</button>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// CONSTANTS — same naming pattern as inventory checker
+// ═══════════════════════════════════════════════════════════
+const KEY_URL      = 'menu_webAppUrl';
+const KEY_SCHEDULE = 'menu_schedule_v1';   // cached 8-week schedule JSON
+const KEY_WEEK     = 'menu_currentWeek';   // last viewed week (0-indexed)
+
+const DAYS  = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+const MEALS = ['Morning','Lunch','Dinner'];
+const MEAL_CLASS = { Morning:'morning', Lunch:'lunch', Dinner:'dinner' };
+
+// ── GLOBAL STATE ─────────────────────────────────────────────
+// These are true module-level globals (not inside functions),
+// matching the inventory checker pattern.
+let scheduleData = [];   // array of 8 week objects from Sheet
+let currentWeek  = 0;    // 0-indexed
+
+// ═══════════════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════════════
+async function boot() {
+  console.log('[Menu] boot() start');
+  loadSettings();
+  buildDots();
+
+  // Restore last viewed week
+  const savedWeek = parseInt(localStorage.getItem(KEY_WEEK) || '0');
+  currentWeek = isNaN(savedWeek) ? 0 : Math.min(savedWeek, 7);
+
+  // Try cached schedule first — instant render
+  const cached = localStorage.getItem(KEY_SCHEDULE);
+  if (cached) {
+    try {
+      scheduleData = JSON.parse(cached);
+      console.log('[Menu] Loaded', scheduleData.length, 'weeks from cache');
+      renderWeek();
+    } catch(e) {
+      console.warn('[Menu] Cache parse error:', e);
+    }
+  } else {
+    renderSetupPrompt();
+  }
+
+  updateHeroSubtitle();
+
+  // Fetch live data if URL is saved
+  const url = localStorage.getItem(KEY_URL);
+  if (url) {
+    await fetchScheduleFromSheet(url, !!cached);
+    await attemptPendingSync(url);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// FETCH HELPERS — XHR instead of fetch(), same as inventory
+// checker — handles Apps Script redirect chains on Android
+// ═══════════════════════════════════════════════════════════
+function androidSafeGet(url) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.onreadystatechange = function() {
+      console.log('[XHR GET] readyState:', xhr.readyState, 'status:', xhr.status);
+    };
+    xhr.onload = function() {
+      console.log('[XHR GET] onload, status:', xhr.status, 'len:', xhr.responseText.length);
+      console.log('[XHR GET] preview:', xhr.responseText.substring(0, 300));
+      try { resolve(JSON.parse(xhr.responseText)); }
+      catch(e) { reject(new Error('Bad JSON: ' + xhr.responseText.substring(0, 200))); }
+    };
+    xhr.onerror = function() {
+      console.error('[XHR GET] onerror — status:', xhr.status, 'readyState:', xhr.readyState);
+      reject(new Error('XHR onerror — status:' + xhr.status));
+    };
+    xhr.ontimeout = function() {
+      console.error('[XHR GET] timeout after 15s');
+      reject(new Error('XHR timed out after 15s'));
+    };
+    xhr.timeout = 15000;
+    console.log('[XHR GET] sending to:', url);
+    xhr.send();
+  });
+}
+
+function androidSafePost(url, payload) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', url, true);
+    xhr.setRequestHeader('Content-Type', 'text/plain');
+    xhr.onreadystatechange = function() {
+      console.log('[XHR POST] readyState:', xhr.readyState, 'status:', xhr.status);
+    };
+    xhr.onload = function() {
+      console.log('[XHR POST] onload, status:', xhr.status, 'response:', xhr.responseText.substring(0, 200));
+      try { resolve(JSON.parse(xhr.responseText)); }
+      catch(e) { reject(new Error('Bad JSON: ' + xhr.responseText.substring(0, 200))); }
+    };
+    xhr.onerror = function() {
+      console.error('[XHR POST] onerror — status:', xhr.status);
+      reject(new Error('XHR POST onerror — status:' + xhr.status));
+    };
+    xhr.ontimeout = function() { reject(new Error('XHR POST timed out')); };
+    xhr.timeout = 15000;
+    console.log('[XHR POST] sending to:', url);
+    xhr.send(JSON.stringify(payload));
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// FETCH SCHEDULE FROM SHEET
+// ═══════════════════════════════════════════════════════════
+async function fetchScheduleFromSheet(url, silent=false) {
+  if (!silent) showLoadingBanner('Loading menu from Google Sheets…');
+  setSyncBadge('syncing', 'Loading…');
+  try {
+    const json = await androidSafeGet(`${url}?action=getSchedule`);
+    console.log('[Menu] fetchSchedule response:', JSON.stringify(json).substring(0, 300));
+    if (json.error) throw new Error(json.error);
+    scheduleData = json.weeks;
+    localStorage.setItem(KEY_SCHEDULE, JSON.stringify(scheduleData));
+    renderWeek();
+    setSyncBadge('synced', `✓ Synced  ${fmtTime()}`);
+    hideLoadingBanner();
+    updateHeroSubtitle();
+    if (!silent) showToast(`✓ Menu loaded (${scheduleData.length} weeks)`);
+  } catch(e) {
+    setSyncBadge('error', '⚠ Offline');
+    hideLoadingBanner();
+    if (!silent) showToast('Could not reach Google Sheets — using cached menu');
+    console.warn('[Menu] fetchSchedule error:', e);
+  }
+}
+
+async function attemptPendingSync(url) {
+  // Reserved for future write-back (editing meals). No-op for now.
+  console.log('[Menu] attemptPendingSync — no pending ops');
+}
+
+async function manualSync() {
+  const url = localStorage.getItem(KEY_URL);
+  if (!url) { showView('settings'); return; }
+  await fetchScheduleFromSheet(url, false);
+}
+
+// ═══════════════════════════════════════════════════════════
+// RENDER WEEK GRID
+// ═══════════════════════════════════════════════════════════
+function renderWeek() {
+  const wrap = document.getElementById('week-grid-wrap');
+  wrap.innerHTML = '';
+
+  document.getElementById('week-num-label').textContent = `Week ${currentWeek + 1}`;
+  document.getElementById('prev-btn').disabled = currentWeek === 0;
+  document.getElementById('next-btn').disabled = currentWeek === 7;
+  localStorage.setItem(KEY_WEEK, String(currentWeek));
+  updateDots();
+
+  if (!scheduleData || scheduleData.length === 0) {
+    renderSetupPrompt();
+    return;
+  }
+
+  const week = scheduleData[currentWeek];
+  const todayName = DAYS[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1];
+
+  const grid = document.createElement('div');
+  grid.className = 'week-grid';
+
+  DAYS.forEach(day => {
+    const col = document.createElement('div');
+    col.className = 'day-col' + (day === todayName && currentWeekIsThisWeek() ? ' today' : '');
+
+    // Day header
+    const hdr = document.createElement('div');
+    hdr.className = 'day-header';
+    hdr.innerHTML = `<div class="day-name">${day.substring(0,3)}</div>`;
+    col.appendChild(hdr);
+
+    MEALS.forEach(meal => {
+      const card = document.createElement('div');
+      card.className = `meal-card ${MEAL_CLASS[meal]}`;
+
+      const lbl = document.createElement('div');
+      lbl.className = 'meal-label';
+      lbl.textContent = meal;
+      card.appendChild(lbl);
+
+      const raw = (week?.days?.[day]?.[meal] || '').trim();
+      if (!raw) {
+        const empty = document.createElement('div');
+        empty.className = 'meal-dishes empty';
+        empty.textContent = '—';
+        card.appendChild(empty);
+      } else {
+        // Split on pipe | to get individual dishes
+        const parts = raw.split(/\s*\|\s*/).filter(p => p.trim());
+        parts.forEach((part, i) => {
+          if (i > 0) {
+            const sep = document.createElement('hr');
+            sep.className = 'dish-sep';
+            card.appendChild(sep);
+          }
+          const d = document.createElement('div');
+          d.className = 'meal-dishes';
+          // Strip leading ID prefix like "C01 - " or "M01 - "
+          d.textContent = part.replace(/^[A-Z]{0,2}\d{1,2}\s*[-–]\s*/, '').trim();
+          card.appendChild(d);
+        });
+      }
+
+      col.appendChild(card);
+    });
+
+    grid.appendChild(col);
+  });
+
+  wrap.appendChild(grid);
+}
+
+function currentWeekIsThisWeek() {
+  const weekOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 1)) / 604800000);
+  return currentWeek === (weekOfYear % 8);
+}
+
+function renderSetupPrompt() {
+  const wrap = document.getElementById('week-grid-wrap');
+  wrap.innerHTML = `
+    <div class="setup-prompt">
+      <div class="icon">🍽️</div>
+      <h2>No menu loaded yet</h2>
+      <p>Connect to your Google Sheet to load the 8-week family menu.</p>
+      <button onclick="showView('settings')">⚙️ Open Settings</button>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// WEEK NAVIGATION
+// ═══════════════════════════════════════════════════════════
+function changeWeek(delta) {
+  const next = currentWeek + delta;
+  if (next < 0 || next > 7) return;
+  currentWeek = next;
+  renderWeek();
+}
+
+function buildDots() {
+  const container = document.getElementById('week-dots');
+  for (let i = 0; i < 8; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'wdot' + (i === 0 ? ' active' : '');
+    dot.onclick = () => { currentWeek = i; renderWeek(); };
+    container.appendChild(dot);
+  }
+}
+
+function updateDots() {
+  document.querySelectorAll('.wdot').forEach((d, i) => {
+    d.classList.toggle('active', i === currentWeek);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// SWIPE SUPPORT (Galaxy Tab)
+// ═══════════════════════════════════════════════════════════
+(function setupSwipe() {
+  let startX = 0, startY = 0;
+  document.addEventListener('touchstart', e => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  }, { passive: true });
+  document.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    // Only trigger if horizontal swipe and not on settings view
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+      if (document.getElementById('view-home').classList.contains('active')) {
+        changeWeek(dx < 0 ? 1 : -1);
+      }
+    }
+  }, { passive: true });
+})();
+
+// Keyboard navigation
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft')  changeWeek(-1);
+  if (e.key === 'ArrowRight') changeWeek(1);
+});
+
+// ═══════════════════════════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════════════════════════
+function loadSettings() {
+  const url = localStorage.getItem(KEY_URL) || '';
+  document.getElementById('webAppUrl').value = url;
+  if (url) {
+    document.getElementById('conn-status').textContent = '✓ Connected: ' + url.substring(0, 60) + '…';
+    document.getElementById('conn-status').className = 'conn-status ok';
+  }
+}
+
+async function connectToSheet() {
+  const url = document.getElementById('webAppUrl').value.trim();
+  if (!url) { showConnStatus('err', 'Please paste a valid URL.'); return; }
+  const btn = document.getElementById('connect-btn');
+  btn.textContent = 'Connecting…';
+  btn.classList.add('loading');
+  try {
+    const json = await androidSafeGet(`${url}?action=getSchedule`);
+    console.log('[Menu] connectToSheet response:', JSON.stringify(json).substring(0, 200));
+    if (json.error) throw new Error(json.error);
+    localStorage.setItem(KEY_URL, url);
+    scheduleData = json.weeks;
+    localStorage.setItem(KEY_SCHEDULE, JSON.stringify(scheduleData));
+    showConnStatus('ok', `✓ Connected — ${scheduleData.length} weeks loaded.`);
+    showToast('✓ Connected to Google Sheets!');
+    setSyncBadge('synced', `✓ Synced  ${fmtTime()}`);
+    updateHeroSubtitle();
+    renderWeek();
+  } catch(e) {
+    showConnStatus('err', 'Could not connect: ' + e.message + ' — Check URL, ensure deployed as Web App, access: Anyone');
+    console.error('[Menu] connectToSheet error:', e);
+  }
+  btn.textContent = 'Connect & Load Menu';
+  btn.classList.remove('loading');
+}
+
+function showConnStatus(type, msg) {
+  const el = document.getElementById('conn-status');
+  el.textContent = msg;
+  el.className = 'conn-status ' + type;
+}
+
+function confirmClear() {
+  if (confirm('Clear locally cached menu? Does not affect the Google Sheet.')) {
+    localStorage.removeItem(KEY_SCHEDULE);
+    scheduleData = [];
+    renderSetupPrompt();
+    showToast('Cache cleared');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// VIEWS
+// ═══════════════════════════════════════════════════════════
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ═══════════════════════════════════════════════════════════
+// UI HELPERS
+// ═══════════════════════════════════════════════════════════
+function setSyncBadge(type, label) {
+  const b = document.getElementById('sync-badge');
+  b.className = 'sync-badge ' + type;
+  b.textContent = label;
+}
+
+function showLoadingBanner(msg) {
+  document.getElementById('loading-text').textContent = msg;
+  document.getElementById('loading-banner').classList.add('visible');
+}
+
+function hideLoadingBanner() {
+  document.getElementById('loading-banner').classList.remove('visible');
+}
+
+function fmtTime() {
+  return new Date().toLocaleTimeString('en-AU', { hour:'2-digit', minute:'2-digit' });
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function updateHeroSubtitle() {
+  const sub = document.getElementById('hero-subtitle');
+  const url = localStorage.getItem(KEY_URL);
+  if (!url) {
+    sub.textContent = 'Tap Settings to connect';
+  } else if (!scheduleData || scheduleData.length === 0) {
+    sub.textContent = 'Loading…';
+  } else {
+    sub.textContent = `8-week rotation · Week ${currentWeek + 1} of 8`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+boot();
+</script>
+</body>
+</html>
